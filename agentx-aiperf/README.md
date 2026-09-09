@@ -3,7 +3,7 @@ Run the following command
 ```bash
 TARGET_URL="https://modal-labs-autoinference--stub-agentx-serve.modal.run"  # fake endpoint, see stub-serve
 TARGET_MODEL="stub"
-modal run bench.py --url $TARGET_URL --model $TARGET_MODEL
+modal run --detach bench.py --url $TARGET_URL --model $TARGET_MODEL
 ```
 
 to run an AgentX benchmark against the OpenAI-compatible Chat Completions Service at the `TARGET_URL`.
