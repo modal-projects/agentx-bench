@@ -53,6 +53,7 @@ serving_image = (
         f"autoinference-utils=={AUTOINFERENCE_UTILS_VERSION}",
     )
     .env(HF_IMAGE_ENV | EXTRA_IMAGE_ENV)
+    .run_commands("rm -rf .cache/huggingface")  # tidy up image
 )
 
 EXTRA_SERVER_ARGS = {
