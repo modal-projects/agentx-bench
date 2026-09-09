@@ -6,7 +6,8 @@ coding agent session traces in the WEKA format.
 Smoke test:
     modal run bench.py \
         --url https://<endpoint> --model Qwen/Qwen3.8-27B \
-        --concurrency 1 --num-trajectories 1 --duration-seconds 900
+        --concurrency 1 --num-trajectories 1 --duration-seconds 60 \
+        --extra-args "--unsafe-override"
 """
 
 from __future__ import annotations
@@ -164,7 +165,7 @@ def _extract_metrics(summary: dict) -> dict:
 def main(
     url: str,
     model: str,
-    tokenizer: str = "Qwen/Qwen3-32B",
+    tokenizer: str = "builtin",
     dataset: str = DEFAULT_DATASET,
     concurrency: int = 1,
     num_trajectories: int = 1,
@@ -208,3 +209,8 @@ def main(
     print(json.dumps(result, indent=2, sort_keys=True))
     if not result.get("summary_found"):
         raise SystemExit(f"AIPerf failed (exit {result['exit_code']}); see logs above.")
+
+    time.sleep(0.5)  # give logs time to clear
+    print(
+        f"retrieve results with: modal volume get agentx-bench-artifacts /{run_id} ./{run_id}"
+    )
