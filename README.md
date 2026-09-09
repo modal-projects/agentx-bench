@@ -12,3 +12,21 @@ It also includes a minimal test server, mathcing the expected API but without al
 This is deployable on Modal as a simple [Web Function](https://modal.com/docs/guide/webhooks).
 
 The [Modal Skills](https://modal.com/docs/cli/latest/skills#modal-skills) are included to help agents develop this software.
+
+## Setup
+
+The only local requirements are Modal and the Python standard library.
+
+If you don't have Modal installed, we recommend using `uvx` to run it in an ephemeral virtual environment:
+
+```bash
+# install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# set up Modal access
+uvx modal setup
+# confirm Modal set up
+uvx modal run agentx-aiperf/bench.py --help
+```
+
+You can also use `modal` with whatever Python environment management you want
+by eliding or replacing the `uvx` prefix in any of the commands here.

@@ -30,19 +30,3 @@ You can locally copy the entire contents, or individual files, via the CLI with 
 ```bash
 modal volume get agentx-bench-artifacts /  # copy all files from /
 ```
-
-## Setup
-
-If you don't have Modal installed, we recommend using `uvx` to run it in an ephemeral virtual environment:
-
-```bash
-# install uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-# set up Modal access
-uvx modal setup
-# confirm Modal set up
-uvx modal run bench.py --help
-```
-
-You can also use `modal` with whatever Python environment management you want
-by eliding or replacing the `uvx` prefix in any of the commands here.
