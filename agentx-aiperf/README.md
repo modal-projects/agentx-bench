@@ -1,7 +1,7 @@
 Run the following command
 
 ```bash
-TARGET_URL="https://modal-labs-autoinference--stub-agentx-serve.modal.run"  # fake endpoint, see stub-serve
+TARGET_URL="https://modal-labs-autoinference--stub-agentx-serve.modal.run"  # fake endpoint, see stub_serve
 TARGET_MODEL="stub"
 modal run --detach bench.py --url $TARGET_URL --model $TARGET_MODEL
 ```
