@@ -1,6 +1,6 @@
-# modal-projects/agentx-bench
+# Run AgentX and develop/deploy inference servers on Modal
 
-This repository implements a basic architecture for running AgentX and inference servers on [Modal](https://modal.com/).
+This repository implements a basic architecture for running AgentX and developing and deploying inference servers on [Modal](https://modal.com/).
 
 That includes:
 
