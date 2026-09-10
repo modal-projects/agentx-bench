@@ -1,6 +1,8 @@
 # Run AgentX and develop/deploy inference servers on Modal
 
-This repository implements a basic architecture for running AgentX and developing and deploying inference servers on [Modal](https://modal.com/).
+This repository implements a basic architecture for using Modal to run the [AgentX](https://inferencex.semianalysis.com/agentx) benchmark
+and develop & deploy inference servers on [Modal](https://modal.com/),
+supporting end-to-end agentic optimization of a server for AgentX workloads all on Modal.
 
 That includes:
 
@@ -8,10 +10,13 @@ That includes:
 - serving performant inference on Modal with a [Modal Server](https://modal.com/docs/guide/servers) (`./serve`)
 - hosting a development environment for the inference server in a [Modal Sandbox](https://modal.com/docs/guide/sandboxes) (`./sandbox`).
 
-It also includes a minimal test server, mathcing the expected API but without all the slow and expensive work, in `./stub_serve`.
+It also includes a minimal test server, matching the expected API for AIPerf
+but without all the slow and expensive work, in `./stub_serve`.
 This is deployable on Modal as a simple [Web Function](https://modal.com/docs/guide/webhooks).
 
-The [Modal Skills](https://modal.com/docs/cli/latest/skills#modal-skills) are included to help agents develop this software.
+This is far from a complete or all-encompassing tool for automating inference server development.
+Instead, it's a starting point for end-user customization.
+The [Modal Skills](https://modal.com/docs/cli/latest/skills#modal-skills) are included to help agents use and modify this software.
 
 ## Example
 
@@ -75,4 +80,6 @@ uvx modal run agentx-aiperf/bench.py --help
 ```
 
 You can also use `modal` with whatever Python environment management you want
-by eliding or replacing the `uvx` prefix in any of the commands here.
+by skipping or replacing the `uvx` prefix in any of the commands here.
+Other commands in this repo should work with the ephemeral `uvx` environment,
+but elide the prefix for easier copying.

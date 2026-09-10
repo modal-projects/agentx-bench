@@ -1,3 +1,5 @@
+# Create a devbox for working on inference servers
+
 This script demonstrates one path for turning an inference server you can deploy on Modal
 into an inference server your agents can _develop_ on Modal using [Modal Sandboxes](https://modal.com/docs/guide/sandboxes).
 
@@ -7,7 +9,11 @@ To create a development environment for the sample server in `serve`, run
 python create_sandbox.py --serve-dir ../serve
 ```
 
-Agents can then manipulate the Sandbox from outside via the [Modal Sandbox SDK](https://modal.com/docs/sdk/py/latest/Sandbox),
+See the `--help` command for detailed options.
+
+You, or your agents with Modal credentials, can then manipulate the container, including
+the server code and running processes, from outside the Sandbox
+via the [Modal Sandbox SDK](https://modal.com/docs/sdk/py/latest/Sandbox),
 e.g. [`Sandbox.exec`](https://modal.com/docs/sdk/py/latest/Sandbox#exec):
 
 ```bash
@@ -17,6 +23,8 @@ devbox_id = "sb-abcdefghijklmnop"  # from creation time
 devbox = modal.Sandbox.from_id(devbox_id)
 devbox.exec("ls")
 ```
+
+## Example
 
 Here's a sample agent action, split into three blocks of reasoning, bash use, and Python code for clarity:
 

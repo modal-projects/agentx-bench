@@ -1,7 +1,9 @@
-Run the following command
+# Run AgentX benchmarks on Modal with AIPerf
+
+Use the following command
 
 ```bash
-TARGET_URL="https://modal-labs-autoinference--stub-agentx-serve.modal.run"  # fake endpoint, see stub_serve
+TARGET_URL="https://modal-labs-autoinference--stub-agentx-serve.modal.run"  # "fake" endpoint, see stub_serve
 TARGET_MODEL="stub"
 modal run --detach bench.py --url $TARGET_URL --model $TARGET_MODEL
 ```
@@ -15,7 +17,7 @@ modal run bench.py --url $TARGET_URL --model $TARGET_MODEL --duration-seconds 30
 ```
 
 Results are stored in a [Modal Volume](https://modal.com/docs/guide/volumes)
-called `agentx-bench-artifacts`.
+called `agentx-bench-artifacts`, split into folders by timestamp.
 
 After your first run, the Volume will be created and results populated.
 
