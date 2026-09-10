@@ -55,7 +55,7 @@ def parse_args(argv):
 
 def get_server_port():
     """Read the configured Server port, or default to port 8000."""
-    value = os.environ.get(SERVER_PORT_ENV, str(PORT))
+    value = os.environ.get(SERVER_PORT_ENV, str(PORT)) or str(PORT)
     try:
         port = int(value)
     except ValueError as exc:

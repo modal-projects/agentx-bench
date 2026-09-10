@@ -24,13 +24,12 @@ MINUTES = 60
 HOURS = 60 * MINUTES
 DEFAULT_TTL = 8 * HOURS
 DEFAULT_IDLE_TIMEOUT = 2 * HOURS
-DEFAULT_SERVER_PORT = 8000
 
 
 def main(**kwargs):
     serve_dir, serve_file = _resolve_serve_paths(kwargs.get("serve_dir"))
     spec = _get_spec(serve_file)
-    server_port = kwargs.get("server_port")
+    dangerously_exposed_port = kwargs.get("dangerously_expose_port", None)
 
     sandbox_app_name = kwargs.get("app_name") or DEFAULT_SANDBOX_APP_NAME
     sandbox_app = _get_app(sandbox_app_name)
@@ -39,11 +38,10 @@ def main(**kwargs):
         spec.image,
         serve_dir,
         serve_file,
-        server_port,
+        server_port=dangerously_exposed_port,
     )
     sandbox_ttl = kwargs.get("ttl")
     sandbox_idle_timeout = kwargs.get("idle_timeout")
-    server_port = kwargs.get("server_port")
     tunnel_ports = kwargs.get("tunnel_ports") or []
 
     sb = _create_from_spec(
@@ -52,7 +50,7 @@ def main(**kwargs):
         sandbox_image=sandbox_image,
         sandbox_ttl=sandbox_ttl,
         sandbox_idle_timeout=sandbox_idle_timeout,
-        server_port=server_port,
+        dangerously_exposed_port=dangerously_exposed_port,
         tunnel_ports=tunnel_ports,
     )
 
@@ -98,17 +96,15 @@ def _append_to_image(
     image: modal.Image,
     serve_dir: Path,
     serve_file: Path,
-    server_port: int,
+    server_port: int | None,
 ) -> modal.Image:
     """Mount the Serve directory at the Sandbox worktree."""
     sandbox_serve_file = Path(WORKTREE) / serve_file.relative_to(serve_dir)
     image = image.uv_pip_install("modal==1.5.5")
-    if environment_name := _get_environment_name():
-        image = image.env({"MODAL_ENVIRONMENT": environment_name})
     image = image.env(
         {
             SERVE_FILE_ENV: str(sandbox_serve_file),
-            SERVER_PORT_ENV: str(server_port),
+            SERVER_PORT_ENV: str(server_port) if server_port is not None else "",
         }
     )
     image = image.add_local_file(START_FILE, "/root/start.py", copy=False)
@@ -131,7 +127,7 @@ def _create_from_spec(
     sandbox_image: modal.Image,
     sandbox_ttl: int,
     sandbox_idle_timeout: int,
-    server_port: int,
+    dangerously_exposed_port: int | None,
     tunnel_ports: list[int],
 ) -> modal.Sandbox:
     """Translate a Server resource spec into a long-lived Sandbox."""
@@ -158,7 +154,18 @@ def _create_from_spec(
         timeout=sandbox_ttl,
         idle_timeout=sandbox_idle_timeout,
         workdir="/root",
-        encrypted_ports=list(dict.fromkeys([server_port, *tunnel_ports])),
+        encrypted_ports=list(
+            dict.fromkeys(
+                [
+                    *(
+                        [dangerously_exposed_port]
+                        if dangerously_exposed_port is not None
+                        else []
+                    ),
+                    *tunnel_ports,
+                ]
+            )
+        ),
     )
 
 
@@ -194,10 +201,11 @@ def cli():
         help=f"Serve directory, relative to the repository root or absolute (default: {DEFAULT_SERVE_DIR})",
     )
     parser.add_argument(
-        "--server-port",
+        "--dangerously-expose-port",
         type=int,
-        default=DEFAULT_SERVER_PORT,
-        help=f"Server port to expose (default: {DEFAULT_SERVER_PORT})",
+        default=None,
+        metavar="PORT",
+        help="create a public Modal Tunnel exposing the provided port",
     )
     parser.add_argument(
         "--tunnel",
