@@ -85,13 +85,6 @@ def _resolve_serve_paths(
     return serve_dir, serve_file
 
 
-def _get_environment_name() -> str | None:
-    """Return the active Modal Environment, or ``None``."""
-    from modal.config import config
-
-    return config.get("environment")
-
-
 def _append_to_image(
     image: modal.Image,
     serve_dir: Path,
