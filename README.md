@@ -28,13 +28,13 @@ though, as it notes, this is plausibly just due to noise in the benchmark from a
 >
 >   1. Found your Sandbox — sb-IfcaUu1Boo1eBAMCX5e52I (task ta-01M245D897S2JB90W7FGTSQ39S) under agentx-sandboxes.
 >
->   2. Started the server inside it: `setsid nohup python /root/create_sandbox.py run-server > /root/server.log 2>&1 &`. Weights (52GB base + 3.6GB DFlash draft) were already
+>   2. Started the server inside it: `setsid nohup python /root/start.py > /root/server.log 2>&1 &`. Weights (52GB base + 3.6GB DFlash draft) were already
 >      cached on the `hf-model-cache` volume, so it was healthy in ~3.5 min.
 >
 >   3. Ran the benchmark twice via `modal run agentx-aiperf/bench.py --url <tunnel> --model Qwen/Qwen3.8-27B --concurrency 1 --num-trajectories 1 --duration-seconds 60 --extra-
 >      args "--unsafe-override"`. Workload: 5 requests, ~215k-token agentic coding contexts, 98.6% prefix-cache reads, ~1.35k output tokens/turn.
 >
->   4. Edited `/workspace/serve/main.py` in the Sandbox (one line in `EXTRA_SERVER_ARGS`) and re-tested:
+>   4. Edited `/workspace/main.py` in the Sandbox (one line in `EXTRA_SERVER_ARGS`) and re-tested:
 >
 >       `"--quantization": "fp8",`
 >

@@ -6,7 +6,7 @@ into an inference server your agents can _develop_ on Modal using [Modal Sandbox
 To create a development environment for the sample server in `serve`, run
 
 ```bash
-python create_sandbox.py --serve-dir ../serve
+python create_sandbox.py --serve-dir serve
 ```
 
 See the `--help` command for detailed options.
@@ -16,7 +16,7 @@ the server code and running processes, from outside the Sandbox
 via the [Modal Sandbox SDK](https://modal.com/docs/sdk/py/latest/Sandbox),
 e.g. [`Sandbox.exec`](https://modal.com/docs/sdk/py/latest/Sandbox#exec):
 
-```bash
+```python
 import modal
 
 devbox_id = "sb-abcdefghijklmnop"  # from creation time
@@ -54,7 +54,7 @@ $ cat > /tmp/agentx-work/apply_edit_restart.py <<'EOF'
 
     EDIT = '''
     import re
-    p = "/workspace/serve/main.py"
+    p = "/workspace/main.py"
     src = open(p).read()
     assert '"--quantization": "fp8",' not in src, "already applied"
     anchor = ''' + repr('    "--preferred-sampling-params":') + '''
@@ -70,7 +70,7 @@ $ cat > /tmp/agentx-work/apply_edit_restart.py <<'EOF'
         # apply the edit
         p = await sb.exec.aio("python", "-c", EDIT)
         # show the args block
-        p = await sb.exec.aio("bash", "-lc", "grep -n '\"--' /workspace/serve/main.py | head -8")
+        p = await sb.exec.aio("bash", "-lc", "grep -n '\"--' /workspace/main.py | head -8")
         print(await p.stdout.read.aio())
         # stop old server process group (pid 139 was setsid leader)
         p = await sb.exec.aio("bash", "-lc",
@@ -81,8 +81,8 @@ $ cat > /tmp/agentx-work/apply_edit_restart.py <<'EOF'
         print(await p.stdout.read.aio())
         # relaunch fresh
         p = await sb.exec.aio("bash", "-lc",
-            "cd /workspace/serve && mv /root/server.log /root/server-run1.log && "
-            "setsid nohup python /root/create_sandbox.py run-server > /root/server.log 2>&1 < /dev/null & echo launched pid $!")
+            "cd /workspace && mv /root/server.log /root/server-run1.log && "
+            "setsid nohup python /root/start.py > /root/server.log 2>&1 < /dev/null & echo launched pid $!")
         print(await p.stdout.read.aio())
 
 
