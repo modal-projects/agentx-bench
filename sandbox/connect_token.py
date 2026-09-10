@@ -19,7 +19,7 @@ from typing import Any
 import modal
 from modal.types import SandboxConnectCredentials
 
-from create_sandbox import DEFAULT_SERVER_PORT
+DEFAULT_SERVER_PORT = 8000
 
 TOKENS_DICT_NAME = "agentx-sandbox-tokens"
 MAX_USER_METADATA_CHARS = 512
