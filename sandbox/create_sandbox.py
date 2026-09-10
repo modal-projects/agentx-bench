@@ -4,10 +4,6 @@ Run with `python sandbox/create_sandbox.py --serve-dir serve `.
 """
 
 import argparse
-import os
-import runpy
-import signal
-import sys
 from pathlib import Path
 
 import modal
@@ -15,12 +11,14 @@ import modal
 THIS = Path(__file__).resolve()
 HERE = THIS.parent
 ROOT = HERE.parent
+START_FILE = HERE / "start.py"
 
 DEFAULT_SERVE_DIR = "serve"
 SERVE_FILE = "main.py"
 DEFAULT_SANDBOX_APP_NAME = "agentx-sandboxes"
 WORKTREE = "/workspace"
 SERVE_FILE_ENV = "MODAL_SANDBOX_SERVE_FILE"
+SERVER_PORT_ENV = "MODAL_SANDBOX_SERVER_PORT"
 
 MINUTES = 60
 HOURS = 60 * MINUTES
@@ -29,45 +27,40 @@ DEFAULT_IDLE_TIMEOUT = 2 * HOURS
 DEFAULT_SERVER_PORT = 8000
 
 
-def _run_server() -> int:
-    """Run the local Server replica and return its child process's exit code.
+def main(**kwargs):
+    serve_dir, serve_file = _resolve_serve_paths(kwargs.get("serve_dir"))
+    spec = _get_spec(serve_file)
+    server_port = kwargs.get("server_port")
 
-    This mode runs inside the Sandbox.
-    """
-    serve_file = Path(os.environ[SERVE_FILE_ENV])
-    serve_dir = str(serve_file.parent)
-    os.chdir(serve_dir)
-    sys.path.insert(0, serve_dir)
-    namespace = runpy.run_path(str(serve_file))
+    sandbox_app_name = kwargs.get("app_name") or DEFAULT_SANDBOX_APP_NAME
+    sandbox_app = _get_app(sandbox_app_name)
 
-    server_handle = namespace["Server"]
-    server = server_handle._get_user_cls()()
+    sandbox_image = _append_to_image(
+        spec.image,
+        serve_dir,
+        serve_file,
+        server_port,
+    )
+    sandbox_ttl = kwargs.get("ttl")
+    sandbox_idle_timeout = kwargs.get("idle_timeout")
+    server_port = kwargs.get("server_port")
+    tunnel_ports = kwargs.get("tunnel_ports") or []
 
-    def exit_on_signal(_signum, _frame):
-        raise SystemExit(0)
+    sb = _create_from_spec(
+        spec,
+        sandbox_app=sandbox_app,
+        sandbox_image=sandbox_image,
+        sandbox_ttl=sandbox_ttl,
+        sandbox_idle_timeout=sandbox_idle_timeout,
+        server_port=server_port,
+        tunnel_ports=tunnel_ports,
+    )
 
-    signal.signal(signal.SIGINT, exit_on_signal)
-    signal.signal(signal.SIGTERM, exit_on_signal)
+    # Print access and observability info, and every public TLS tunnel for the Sandbox.
+    _print_access(sb)
+    _print_tunnels(sb)
 
-    started = False
-    try:
-        server.startup()
-        started = True
-
-        process = getattr(server, "proc", None)
-        if process is None:
-            process = server.endpoint._proc
-        assert process is not None, "Server.startup() did not create a child process"
-        return int(process.wait() or 0)
-    finally:
-        if started and hasattr(server, "stop"):
-            server.stop()
-
-
-if __name__ == "__main__" and sys.argv[1:] == ["run-server"]:
-    """The Server runner inside the Sandbox."""
-    exit_code = _run_server()
-    raise SystemExit(exit_code)
+    return sb.object_id
 
 
 def _get_spec(serve_main_path: Path):
@@ -105,14 +98,20 @@ def _append_to_image(
     image: modal.Image,
     serve_dir: Path,
     serve_file: Path,
+    server_port: int,
 ) -> modal.Image:
     """Mount the Serve directory at the Sandbox worktree."""
     sandbox_serve_file = Path(WORKTREE) / serve_file.relative_to(serve_dir)
     image = image.uv_pip_install("modal==1.5.5")
     if environment_name := _get_environment_name():
         image = image.env({"MODAL_ENVIRONMENT": environment_name})
-    image = image.env({SERVE_FILE_ENV: str(sandbox_serve_file)})
-    image = image.add_local_file(THIS, "/root/create_sandbox.py", copy=False)
+    image = image.env(
+        {
+            SERVE_FILE_ENV: str(sandbox_serve_file),
+            SERVER_PORT_ENV: str(server_port),
+        }
+    )
+    image = image.add_local_file(START_FILE, "/root/start.py", copy=False)
     image = image.add_local_dir(serve_dir, WORKTREE, copy=False)
     return image
 
@@ -167,8 +166,7 @@ def _print_access(sb: modal.Sandbox) -> None:
     """Print access and observability for a created Sandbox."""
     print("Dashboard:", sb.get_dashboard_url(), sep="\n\t")
     print("Shell access:", f"modal shell {sb.object_id}", sep="\n\t")
-    print("CLI logs:", f"modal container logs {sb.object_id}", sep="\n\t")
-    print("Start Server:", "python /root/create_sandbox.py run-server", sep="\n\t")
+    print("Start Server:", "python start.py", sep="\n\t")
 
 
 def _print_tunnels(sb: modal.Sandbox) -> None:
@@ -178,7 +176,7 @@ def _print_tunnels(sb: modal.Sandbox) -> None:
         print(f"Tunnel for port {port}:", tunnel.url, sep="\n\t")
 
 
-def main() -> None:
+def cli():
     """Parse local CLI options, create a detached Sandbox, and print its access data."""
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -224,29 +222,10 @@ def main() -> None:
         metavar="SECONDS",
         help=f"seconds before an idle Sandbox shuts down (default: {DEFAULT_IDLE_TIMEOUT})",
     )
-    args = parser.parse_args()
 
-    sandbox_app_name = args.app_name or DEFAULT_SANDBOX_APP_NAME
-    sandbox_app = _get_app(sandbox_app_name)
-
-    serve_dir, serve_file = _resolve_serve_paths(args.serve_dir)
-    spec = _get_spec(serve_file)
-    sandbox_image = _append_to_image(spec.image, serve_dir, serve_file)
-
-    sb = _create_from_spec(
-        spec,
-        sandbox_app=sandbox_app,
-        sandbox_image=sandbox_image,
-        sandbox_ttl=args.ttl,
-        sandbox_idle_timeout=args.idle_timeout,
-        server_port=args.server_port,
-        tunnel_ports=args.tunnel_ports,
-    )
-
-    # Print access and observability info, and every public TLS tunnel for the Sandbox.
-    _print_access(sb)
-    _print_tunnels(sb)
+    kwargs = vars(parser.parse_args())
+    main(**kwargs)
 
 
 if __name__ == "__main__":
-    main()
+    cli()
