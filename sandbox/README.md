@@ -24,6 +24,19 @@ devbox = modal.Sandbox.from_id(devbox_id)
 devbox.exec("ls")
 ```
 
+You can expose servers running inside the container to clients without Modal access by running:
+
+```bash
+python connect_token.py sb-abcdefghijklmnop
+```
+
+to create a [Sandbox Connect Token](https://modal.com/docs/guide/sandbox-networking)
+and store it in a [Modal Dict](https://modal.com/docs/guide/dicts) and [Queue](https://modal.com/docs/guide/queues).
+Note that these resources and the Sandbox itself are accessible to holders of Modal credentials that can access
+their [Modal Environment](https://modal.com/docs/guide/environments).
+
+The Connect Token can be used by clients via bearer auth in, for instance, an AgentX benchmark runner.
+
 ## Example
 
 Here's a sample agent action, split into three blocks of reasoning, bash use, and Python code for clarity:
